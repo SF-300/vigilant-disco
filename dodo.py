@@ -43,7 +43,14 @@ def task_lint() -> Dict[str, Any]:
 
 
 def task_package() -> Dict[str, Any]:
-    """Create .ankiaddon file."""
+    """Create .ankiaddon file.
+    
+    Following Anki add-on packaging requirements:
+    - Includes all files from src/ directory (recursively)
+    - Includes manifest.json from root
+    - Excludes __pycache__ directories
+    - Creates a flat structure in the ZIP as required by Anki
+    """
 
     def create_addon() -> None:
         """Package the addon sources into a ZIP file."""
@@ -52,10 +59,25 @@ def task_package() -> Dict[str, Any]:
             addon_file.unlink()
 
         with zipfile.ZipFile(addon_file, "w") as zf:
+            # Add manifest.json from root
+            manifest = Path("manifest.json")
+            if manifest.exists():
+                zf.write(manifest, arcname=manifest.name)
+
+            # Add all files from src/ recursively
             src_path = Path("src")
-            for file in src_path.glob("*"):
-                if file.is_file():  # Only package files, not directories
-                    zf.write(file, arcname=file.name)
+            for file in src_path.rglob("*"):
+                # Skip __pycache__ directories and their contents
+                if "__pycache__" in file.parts:
+                    continue
+                # Skip .egg-info directories
+                if ".egg-info" in file.parts:
+                    continue
+                # Only package files, not directories
+                if file.is_file():
+                    # Remove src/ prefix to create flat structure
+                    rel_path = file.relative_to(src_path)
+                    zf.write(file, arcname=str(rel_path))
 
     return {
         "actions": [(create_addon,)],

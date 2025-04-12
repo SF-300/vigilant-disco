@@ -11,9 +11,6 @@ dist/
 # Task runner
 .doit.db*
 
-# GitHub
-.github/
-
 # Testing and coverage
 .coverage
 .coverage.*
@@ -25,3 +22,5 @@ htmlcov/
 user_files/
 *.anki2
 *.apkg
+
+*.ankiaddon

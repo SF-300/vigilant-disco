@@ -1,11 +1,13 @@
-from pathlib import Path
 import json
 from dataclasses import dataclass
+from pathlib import Path
+
 
 @dataclass(frozen=True)
 class Config:
     enabled: bool
     debug: bool
+
 
 def load_config() -> Config:
     """Load addon configuration from config.json"""
@@ -13,6 +15,7 @@ def load_config() -> Config:
     with open(config_path, "r") as f:
         data = json.load(f)
     return Config(**data)
+
 
 # Singleton instance
 config = load_config()

@@ -1,14 +1,4 @@
 {
-  "name": "My Anki Addon",
-  "version": "0.1.0",
-  "description": "A basic Anki add-on.",
-  "author": "Your Name",
-  "dependencies": {
-    "anki": ">=2.1.0"
-  },
-  "anki_version": ">=2.1.0",
-  "compatibility": {
-    "min": "2.1.0",
-    "max": "2.1.99"
-  }
+  "package": "my-anki-addon",
+  "name": "My Anki Addon"
 }
