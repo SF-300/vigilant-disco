@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+
+# Virtual environment (only .venv)
+.venv
+
+# Task runner
+.doit.db*
+
+# GitHub
+.github/
+
+# Testing and coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Anki specific
+user_files/
+*.anki2
+*.apkg
