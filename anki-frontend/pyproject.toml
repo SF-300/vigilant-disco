@@ -1,13 +1,12 @@
-[tool.poetry]
+[project]
 name = "anki-frontend"
 version = "0.1.0"
-description = "Anki Addon Frontend"
-authors = ["Vlad"]
-
-[tool.poetry.dependencies]
-python = ">=3.13"
-pyqt = "*"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "anki>=25.2.1",
+    "doit>=0.36.0",
+    "pyqt5>=5.15.11",
+    "pytest>=8.3.5",
+]
