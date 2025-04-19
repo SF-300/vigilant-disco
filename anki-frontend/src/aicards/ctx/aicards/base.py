@@ -1,32 +1,61 @@
+from abc import ABC
+from dataclasses import dataclass
 import typing as t
 
 
-# Data structure for initial text extractions from highlights
-class Extraction(t.TypedDict):
+@dataclass(frozen=True)
+class Extraction:
     id: str
     snippet: str
     context: str | None
 
 
-# Data structure for detailed Anki note data
-class Protonote(t.TypedDict):
+@dataclass(frozen=True)
+class Protonote:
     id: str
-    note_type: str
-    description: str
+
+    @property
+    def description(self) -> str:
+        raise NotImplementedError()
 
 
-class ExtractionProtonotes(t.TypedDict):
+@dataclass(frozen=True)
+class MeaningProtonote(Protonote):
+    type: t.Literal["Meaning"]
+    concept: str
+    examples: tuple[str]
+
+    @property
+    def description(self) -> str:
+        return f"Meaning of {self.concept} in the context of {self.id}"
+
+
+@dataclass(frozen=True)
+class EnglishNounProtonote(Protonote):
+    type: t.Literal["English Noun"]
+    singular: str
+    plural: str
+    examples: tuple[str]
+
+    @property
+    def description(self) -> str:
+        return f"English noun {self.singular}"
+
+
+@dataclass(frozen=True)
+class ExtractionProtonotes:
     extraction: Extraction
-    protonotes: t.Sequence[Protonote]
+    protonotes: tuple[Protonote]
 
 
-class ProcessImage(t.Protocol):
-    def __call__(self, image_data: bytes) -> list[Extraction]: ...
+class Service(ABC):
+    def process_image(
+        self,
+        image_data: bytes,
+    ) -> t.Sequence[Extraction]: ...
 
+    def create_protonotes(
+        self, extractions: t.Sequence[Extraction]
+    ) -> t.Sequence[ExtractionProtonotes]: ...
 
-class CreateProtonotes(t.Protocol):
-    def __call__(self, extractions: list[Extraction]) -> list[ExtractionProtonotes]: ...
-
-
-class ExportProtonotes(t.Protocol):
-    def __call__(self, protonotes: list[Protonote]) -> None: ...
+    def export_protonotes(self, protonotes: t.Sequence[Protonote]) -> bool: ...
