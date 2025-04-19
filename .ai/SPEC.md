@@ -32,14 +32,12 @@ The add-on will enable users to:
 7.  **Preview Notes:** The add-on presents a nested preview (using a tree table structure) of the Anki notes that will be created:
     * **Top Level:** The selected extracted noun.
     * **Nested Items:**
-        * **Meaning Note:**
+        * **Meaning Note (with checkbox):**
             * Sentence: \[Extracted sentence from LLM]
             * Concept: \[Generated concept from LLM]
-            * \[Checkbox for selection]
-        * **English Noun Note:**
+        * **English Noun Note (with checkbox):**
             * Singular: \[Singular form from LLM]
             * Plural: \[Plural form from LLM]
-            * \[Checkbox for selection]
 8.  **Confirm and Export:** The user reviews the preview and selects the "Meaning" and/or "English noun" notes they want to create for each word using the checkboxes. They then click an "Export to Anki" button.
 9.  **Export in Progress:** The add-on's GUI grays out to indicate that the export process is running.
 10. **Feedback:**
