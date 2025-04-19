@@ -102,6 +102,14 @@ def task_dev_install() -> Dict[str, Any]:
     return {"actions": [(install_addon,)], "task_dep": ["package"]}
 
 
+def task_run_standalone_ui() -> Dict[str, Any]:
+    """Run the standalone UI test script."""
+    return {
+        "actions": ["python src/aicards/standalone_ui_test.py"],
+        "verbosity": 2,
+    }
+
+
 # def task_clean() -> Dict[str, Any]:
 #     """Clean build artifacts."""
 #     patterns = [

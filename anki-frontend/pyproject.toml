@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "anki>=25.2.1",
+    "aqt>=25.2.1",
     "doit>=0.36.0",
     "pyqt5>=5.15.11",
     "pytest>=8.3.5",
