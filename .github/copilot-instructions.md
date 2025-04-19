@@ -4,3 +4,4 @@
 * Use modern Python >=3.13 features:
 ** use e.g. `list[str]` instead of `typing.List[str]`
 * automation scripts must be run using `./dodo.py <args>`
+* project is using `uv` package for package management in Python
