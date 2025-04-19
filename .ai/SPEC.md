@@ -72,3 +72,63 @@ Basic error messages will be displayed to the user in case of issues during the 
 * Integration with a dictionary for more reliable word form retrieval.
 * Support for other card types (e.g., vocabulary with definitions, example sentences).
 * More detailed error reporting and logging.
+
+**9. Architecture & Code Organization**
+
+* The project follows a **Domain-Driven Design (DDD)** approach with a single bounded context: `aicards`.
+* The codebase is organized into vertical slices:
+    * **base:** Contains shared data structures and interfaces (using Python protocols) for dependency inversion.
+    * **core:** Contains business logic, including all interactions with the Anki API and the LLM API, implemented against interfaces defined in `base`.
+    * **gui:** Implements the PyQt GUI, orchestrates user interactions, and communicates with `core` using objects and interfaces defined in `base`.
+* All dependencies between layers are explicit and follow dependency inversion principles—hidden dependencies are avoided.
+* Data exchanged between `gui` and `core` is represented by complex objects (e.g., dataclasses) defined in `base`.
+* Modern Python (>=3.13) features are used throughout the codebase (e.g., `list[str]` instead of `typing.List[str]`).
+
+**10. Tooling & Automation**
+
+* Python package management is handled using the `uv` package.
+* Automation scripts are run using `./dodo.py <args>`.
+
+## 11. User Interface (UI)
+
+The proposed user interface for the Anki add-on, based on the provided sketch, is designed within a dedicated window and guides the user through the workflow via distinct sections:
+
+1.  **Image Display Area (Step #1):**
+    * **Location:** Top-left section of the window.
+    * **Purpose:** Displays the screenshot pasted by the user (via `Ctrl+V`), providing visual context for the extracted text.
+
+2.  **Extractions List (Step #2):**
+    * **Location:** Top-right section, adjacent to the Image Display Area.
+    * **Purpose:** Shows the text fragments (nouns, phrases, phrasal verbs, ...) identified by OCR from the pasted image.
+    * **Interaction:** Functions as a multi-select list where the user chooses the extractions to be used as seeds for different Anki notes.
+
+3.  **Confirmation Action (Step #3):**
+    * **Location:** Positioned between the Extractions List and the Note Preview Area.
+    * **Component:** A "**Confirm**" button.
+    * **Purpose:** Triggers LLM processing (context, concept, grammatical forms, ...) for the extractions selected in the Extractions List.
+
+4.  **Note Preview & Selection Area (Step #4):**
+    * **Location:** The main, larger area below the Image Display and Confirmation Action.
+    * **Structure:** Organized as a tree table or an expandable list.
+    * **Content:**
+        * **Top Level:** Lists each extraction selected from the Extractions List (e.g., `+ Electricity`, `+ drinking`).
+        * **Nested Levels:** Expanding an extraction reveals potential Anki notes, for which this particular extraction should be used as seed:
+            * **Grammar:** Shows data for the `"English Noun"` note type (Singular/Plural forms).
+            * **Meaning:** Shows data for the `"Meaning"` note type (Term/Concept and Example Sentence).
+    * **Interaction (Implied by SPEC):** This area will incorporate checkboxes (as specified in SPEC section 4, steps 7 & 8, though not explicitly drawn in the sketch) next to "Grammar" and "Meaning" sub-items. This allows users to select precisely which note types to export for each chosen extraction.
+
+5.  **Final Export Action (Sketch #5):**
+    * **Location:** At the bottom of the window.
+    * **Component:** An "**Import into Anki database**" button.
+    * **Purpose:** Initiates the export of the user-selected notes (from the Preview Area) into their Anki collection.
+
+**Expected UI Flow:**
+
+1.  User pastes a screenshot into the **Image Display Area (1)**.
+2.  The add-on performs OCR and populates the **Extractions List (2)**.
+3.  User selects desired extractions from the **Extractions List (2)**.
+4.  User clicks the **Confirm button (3)**.
+5.  The add-on retrieves detailed note data using the LLM and displays it in the **Note Preview Area (4)**.
+6.  User reviews the generated data in the **Note Preview Area (4)**, using the expandable structure and checkboxes to finalize selections for e.g. the `Meaning` and `English Noun` notes for each extraction.
+7.  User clicks the **Import into Anki database button (5)**.
+8.  The UI provides success or error feedback.
