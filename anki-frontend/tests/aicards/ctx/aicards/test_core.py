@@ -1,6 +1,5 @@
-"""Tests for the core AiCards service implementation."""
-
 import pytest
+
 from aicards.ctx.aicards.core import MockService
 from aicards.ctx.aicards.base import Extraction, MeaningProtonote, EnglishNounProtonote
 

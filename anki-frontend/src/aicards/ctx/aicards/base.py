@@ -1,6 +1,13 @@
+import typing as t
 from abc import ABC
 from dataclasses import dataclass
-import typing as t
+
+
+@dataclass(frozen=True)
+class Image:
+    name: str
+    mime: str
+    data: bytes
 
 
 @dataclass(frozen=True)
@@ -23,7 +30,7 @@ class Protonote:
 class MeaningProtonote(Protonote):
     type: t.Literal["Meaning"]
     concept: str
-    examples: tuple[str]
+    examples: tuple[str, ...]
 
     @property
     def description(self) -> str:
@@ -35,7 +42,7 @@ class EnglishNounProtonote(Protonote):
     type: t.Literal["English Noun"]
     singular: str
     plural: str
-    examples: tuple[str]
+    examples: tuple[str, ...]
 
     @property
     def description(self) -> str:
@@ -49,10 +56,7 @@ class ExtractionProtonotes:
 
 
 class Service(ABC):
-    def process_image(
-        self,
-        image_data: bytes,
-    ) -> t.Sequence[Extraction]: ...
+    def process_image(self, image: Image) -> t.Sequence[Extraction]: ...
 
     def create_protonotes(
         self, extractions: t.Sequence[Extraction]
