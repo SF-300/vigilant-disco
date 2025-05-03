@@ -22,6 +22,7 @@
     * Docstrings MUST be short and to the point
     * Docstrings SHOULD be used only for public functions
     * Simple functions SHOULD NOT have docstrings at all
+* Project relies on asyncio (and qt stuff is also integrated with it), so there is no problem of thread-synchronization.
 
 # How LLM should behave
 * Be concise, but not too concise

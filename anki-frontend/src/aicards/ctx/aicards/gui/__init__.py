@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QListWidget,
+    QListWidgetItem,
     QPushButton,
     QTreeWidget,
     QTreeWidgetItem,
@@ -25,13 +26,13 @@ from aicards.ctx.aicards.base import (
     Extraction,
     Image,
     Protonote,
-    ExtractionProtonotes,
+    ExtractionWithPrototonotes,
 )
 
 
 async def paste_receiver(
     extraction_input_queue: asyncio.Queue[Image],
-    container: "AICardsContainer",
+    image_area: QLabel,
 ) -> None:
     clipboard = QApplication.clipboard()
     assert clipboard is not None
@@ -67,171 +68,161 @@ async def paste_receiver(
             paste_event_queue.put_nowait(qt_image)
             print("Clipboard monitor: Queued image")
         except asyncio.QueueFull:
-            QMessageBox.warning(container, "Error", "Processing queue is full")
+            # QMessageBox.warning(container, "Error", "Processing queue is full")
+            raise
         except Exception as e:
             print(f"Error handling clipboard change: {e}")
 
     conn = clipboard.dataChanged.connect(handle_clipboard_change)
 
-    while True:
-        print("Paste receiver: waiting for image...")
-        qt_image: QImage = await paste_event_queue.get()
-        print("Paste receiver: got image!")
+    try:
+        while True:
+            print("Paste receiver: waiting for image...")
+            qt_image: QImage = await paste_event_queue.get()
+            print("Paste receiver: got image!")
 
-        # Scale and display image
-        scaled = qt_image.scaled(
-            container.image_area.width(),
-            container.image_area.height(),
-            Qt.AspectRatioMode.KeepAspectRatio,
-        )
-        pixmap = QPixmap.fromImage(scaled)
-        print(f"Paste receiver: setting pixmap {pixmap.width()}x{pixmap.height()}")
-        container.image_area.setPixmap(pixmap)
+            # Scale and display image
+            scaled = qt_image.scaled(
+                image_area.width(),
+                image_area.height(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+            )
+            pixmap = QPixmap.fromImage(scaled)
+            image_area.setPixmap(pixmap)
 
-        # Convert to domain Image
-        byte_array = QByteArray()
-        buffer = QBuffer(byte_array)
-        buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-        qt_image.save(buffer, "PNG")
-        buffer.close()
+            # Convert to domain Image
+            byte_array = QByteArray()
+            buffer = QBuffer(byte_array)
+            buffer.open(QIODevice.OpenModeFlag.WriteOnly)
+            qt_image.save(buffer, "PNG")
+            buffer.close()
 
-        image = Image(
-            name="clipboard_image.png", mime="image/png", data=bytes(byte_array.data())
-        )
+            image = Image(
+                name="clipboard_image.png",
+                mime="image/png",
+                data=bytes(byte_array.data()),
+            )
 
-        print("Paste receiver: forwarding to extraction handler")
-        await extraction_input_queue.put(image)
-        paste_event_queue.task_done()
+            print("Paste receiver: forwarding to extraction handler")
+            await extraction_input_queue.put(image)
+            paste_event_queue.task_done()
+    except asyncio.CancelledError:
+        clipboard.dataChanged.disconnect(conn)
 
 
-async def extraction_handler(
-    extraction_input_queue: asyncio.Queue[Image],
-    protonote_input_queue: asyncio.Queue[t.Sequence[Extraction]],
-    container: "AICardsContainer",
+async def extractions_handler(
+    incoming: asyncio.Queue[Image],
+    outgoing: asyncio.Queue[t.Sequence[Extraction]],
+    extractions_list: QListWidget,
+    confirm_button: QPushButton,
     service: Service,
 ) -> None:
-    while True:
-        image: Image = await extraction_input_queue.get()
-        extractions = service.process_image(image)
+    async def pull():
+        while True:
+            image = await incoming.get()
+            new_extractions = await service.process_image(image)
 
-        # Update UI
-        container.extractions_list.clear()
-        for extraction in extractions:
-            container.extractions_list.addItem(extraction.snippet)
+            for extraction in new_extractions:
+                item = QListWidgetItem(extraction.snippet)
+                item.setData(Qt.ItemDataRole.UserRole, extraction)
+                extractions_list.addItem(item)
+                item.setSelected(True)
 
-        await protonote_input_queue.put(extractions)
-        extraction_input_queue.task_done()
+            incoming.task_done()
+
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(pull())
+
+        while True:
+            await qt_signal_to_future(confirm_button.clicked)
+
+            selected_extractions: list[Extraction] = []
+            for item in extractions_list.selectedItems():
+                extraction = item.data(Qt.ItemDataRole.UserRole)
+                selected_extractions.append(extraction)
+
+            if not selected_extractions:
+                continue
+
+            await outgoing.put(selected_extractions)
+            extractions_list.clear()
 
 
-async def protonote_handler(
-    protonote_input_queue: asyncio.Queue[t.Sequence[Extraction]],
-    export_input_queue: asyncio.Queue[
-        tuple[dict[str, Protonote], t.Sequence[ExtractionProtonotes]]
-    ],
-    container: "AICardsContainer",
+async def protonotes_creator(
+    incoming: asyncio.Queue[t.Sequence[Extraction]],
+    outgoing: asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]],
+    notes_tree: QTreeWidget,
+    confirm_button: QPushButton,
     service: Service,
 ) -> None:
-    while True:
-        extractions = await protonote_input_queue.get()
-
-        # Wait for confirm button click
-        await qt_signal_to_future(container.confirm_button.clicked)
-
-        selected_indices = container.extractions_list.selectedIndexes()
-        selected_extractions = [extractions[idx.row()] for idx in selected_indices]
-
-        if not selected_extractions:
-            protonote_input_queue.task_done()
-            QMessageBox.warning(container, "Warning", "No extractions selected")
-            continue
-
-        extraction_protonotes = service.create_protonotes(selected_extractions)
-
-        # Store protonotes with their IDs for later lookup
-        id_to_protonote: dict[str, Protonote] = {}
-
-        # Update tree
-        container.notes_tree.clear()
+    def update_tree(
+        extraction_protonotes: t.Sequence[ExtractionWithPrototonotes],
+    ) -> None:
         for ep in extraction_protonotes:
-            extraction_item = QTreeWidgetItem(container.notes_tree)
+            extraction_item = QTreeWidgetItem(notes_tree)  # Updated
             extraction_item.setText(0, ep.extraction.snippet)
             extraction_item.setFlags(
                 extraction_item.flags() | Qt.ItemFlag.ItemIsUserCheckable
             )
             extraction_item.setCheckState(0, Qt.CheckState.Checked)
+            extraction_item.setData(0, Qt.ItemDataRole.UserRole, ep)
 
             for protonote in ep.protonotes:
                 note_item = QTreeWidgetItem(extraction_item)
                 note_item.setText(0, protonote.description)
                 note_item.setFlags(note_item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
                 note_item.setCheckState(0, Qt.CheckState.Checked)
-                # Store ID in item data for later lookup
-                note_item.setData(0, Qt.ItemDataRole.UserRole, protonote.id)
-                id_to_protonote[protonote.id] = protonote
+                note_item.setData(0, Qt.ItemDataRole.UserRole, protonote)
 
-        container.notes_tree.expandAll()
+        notes_tree.expandAll()  # Updated
 
-        await export_input_queue.put((id_to_protonote, extraction_protonotes))
-        protonote_input_queue.task_done()
+    def get_selected_extraction_protonotes() -> t.Sequence[ExtractionWithPrototonotes]:
+        selected = []
+
+        for i in range(notes_tree.topLevelItemCount()):  # Updated
+            top_item = notes_tree.topLevelItem(i)  # Updated
+            if top_item is None:
+                continue
+            ep = top_item.data(0, Qt.ItemDataRole.UserRole)
+            if ep and top_item.checkState(0) == Qt.CheckState.Checked:
+                selected.append(ep)
+
+        return selected
+
+    async def pull():
+        while True:
+            extractions = await incoming.get()
+            extraction_protonotes = await service.create_protonotes(extractions)
+
+            # Update the tree with the results
+            update_tree(extraction_protonotes)
+
+    # Run the continuous task
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(pull())
+
+        while True:
+            await qt_signal_to_future(confirm_button.clicked)  # Updated
+
+            selected_protonotes = get_selected_extraction_protonotes()
+            if not selected_protonotes:
+                continue
+
+            # Forward to next stage and mark as complete
+            await outgoing.put(selected_protonotes)
+            incoming.task_done()
+
+            notes_tree.clear()  # Updated
 
 
 async def export_handler(
-    export_input_queue: asyncio.Queue[
-        tuple[dict[str, Protonote], t.Sequence[ExtractionProtonotes]]
-    ],
-    container: "AICardsContainer",
+    export_q: asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]],
     service: Service,
 ) -> None:
     while True:
-        id_to_protonote, _ = await export_input_queue.get()
+        items = await export_q.get()
 
-        # Wait for export button click
-        await qt_signal_to_future(container.export_button.clicked)
-
-        # Get selected protonotes from tree
-        selected_protonotes: list[Protonote] = []
-        root = container.notes_tree.invisibleRootItem()
-        if not root:
-            export_input_queue.task_done()
-            continue
-
-        for i in range(root.childCount()):
-            extraction_item = root.child(i)
-            if not extraction_item:
-                continue
-
-            if extraction_item.checkState(0) == Qt.CheckState.Checked:
-                for j in range(extraction_item.childCount()):
-                    note_item = extraction_item.child(j)
-                    if not note_item:
-                        continue
-
-                    if note_item.checkState(0) == Qt.CheckState.Checked:
-                        protonote_id = note_item.data(0, Qt.ItemDataRole.UserRole)
-                        if protonote_id in id_to_protonote:
-                            selected_protonotes.append(id_to_protonote[protonote_id])
-
-        if not selected_protonotes:
-            export_input_queue.task_done()
-            QMessageBox.warning(container, "Warning", "No notes selected for export")
-            continue
-
-        success = service.export_protonotes(selected_protonotes)
-
-        if success:
-            QMessageBox.information(
-                container,
-                "Success",
-                "Successfully exported notes to Anki",
-            )
-        else:
-            QMessageBox.warning(
-                container,
-                "Error",
-                "Failed to export notes to Anki",
-            )
-
-        export_input_queue.task_done()
+        await service.export_protonotes([p for ep in items for p in ep.protonotes])
 
 
 class AICardsContainer(QWidget):
@@ -257,47 +248,54 @@ class AICardsContainer(QWidget):
 
         # Create widgets
         top_section = create_top_section(self)
-        self._confirm_button = create_confirm_button(self)
+        self._confirm_extractions = create_confirm_button(self)
         self._notes_tree = create_notes_preview(self)
-        self._export_button = create_export_button(self)
+        self._confirm_protonotes = create_export_button(self)
         layout = create_main_layout(
-            top_section, self._confirm_button, self._notes_tree, self._export_button
+            top_section,
+            self._confirm_extractions,
+            self._notes_tree,
+            self._confirm_protonotes,
         )
         self.setLayout(layout)
 
         # Create queues
-        _extraction_input_queue = asyncio.Queue[Image]()
-        _protonote_input_queue = asyncio.Queue[t.Sequence[Extraction]]()
-        _export_input_queue = asyncio.Queue[
-            tuple[dict[str, Protonote], t.Sequence[ExtractionProtonotes]]
-        ]()
+        _extractions_q = asyncio.Queue[Image]()
+        _protonotes_q = asyncio.Queue[t.Sequence[Extraction]]()
+        _exports_q = asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]]()
+
+        # Get widget references
+        image_area = self.image_area
+        extractions_list = self.extractions_list
+        notes_tree = self.notes_tree
 
         tg.create_task(
             paste_receiver(
-                _extraction_input_queue,
-                self,
+                _extractions_q,
+                image_area,
             )
         )
         tg.create_task(
-            extraction_handler(
-                _extraction_input_queue,
-                _protonote_input_queue,
-                self,
+            extractions_handler(
+                _extractions_q,
+                _protonotes_q,
+                extractions_list,
+                self._confirm_extractions,
                 service,
             )
         )
         tg.create_task(
-            protonote_handler(
-                _protonote_input_queue,
-                _export_input_queue,
-                self,
+            protonotes_creator(
+                _protonotes_q,
+                _exports_q,
+                notes_tree,
+                self._confirm_protonotes,
                 service,
             )
         )
         tg.create_task(
             export_handler(
-                _export_input_queue,
-                self,
+                _exports_q,
                 service,
             )
         )
@@ -311,16 +309,16 @@ class AICardsContainer(QWidget):
         return self.findChild(QListWidget)
 
     @property
-    def confirm_button(self) -> QPushButton:
-        return self._confirm_button
+    def confirm_extractions_button(self) -> QPushButton:
+        return self._confirm_extractions
 
     @property
     def notes_tree(self) -> QTreeWidget:
         return self._notes_tree
 
     @property
-    def export_button(self) -> QPushButton:
-        return self._export_button
+    def confirm_protonotes_button(self) -> QPushButton:
+        return self._confirm_protonotes
 
 
 def create_main_layout(*widgets: QWidget) -> QVBoxLayout:

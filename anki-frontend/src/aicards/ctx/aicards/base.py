@@ -1,6 +1,7 @@
 import typing as t
 from abc import ABC
-from dataclasses import dataclass
+
+from pydantic.dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,12 @@ class Extraction:
 
 
 @dataclass(frozen=True)
+class Example:
+    sentence: str
+    image: None
+
+
+@dataclass(frozen=True)
 class Protonote:
     id: str
 
@@ -30,11 +37,17 @@ class Protonote:
 class MeaningProtonote(Protonote):
     type: t.Literal["Meaning"]
     concept: str
-    examples: tuple[str, ...]
+    examples: tuple[
+        Example | None,
+        Example | None,
+        # Example | None,
+        # Example | None,
+        # Example | None,
+    ]
 
     @property
     def description(self) -> str:
-        return f"Meaning of {self.concept} in the context of {self.id}"
+        return self.concept
 
 
 @dataclass(frozen=True)
@@ -42,7 +55,6 @@ class EnglishNounProtonote(Protonote):
     type: t.Literal["English Noun"]
     singular: str
     plural: str
-    examples: tuple[str, ...]
 
     @property
     def description(self) -> str:
@@ -50,16 +62,16 @@ class EnglishNounProtonote(Protonote):
 
 
 @dataclass(frozen=True)
-class ExtractionProtonotes:
+class ExtractionWithPrototonotes:
     extraction: Extraction
-    protonotes: tuple[Protonote]
+    protonotes: tuple[Protonote, ...]
 
 
 class Service(ABC):
-    def process_image(self, image: Image) -> t.Sequence[Extraction]: ...
+    async def process_image(self, image: Image) -> t.Sequence[Extraction]: ...
 
-    def create_protonotes(
+    async def create_protonotes(
         self, extractions: t.Sequence[Extraction]
-    ) -> t.Sequence[ExtractionProtonotes]: ...
+    ) -> t.Sequence[ExtractionWithPrototonotes]: ...
 
-    def export_protonotes(self, protonotes: t.Sequence[Protonote]) -> bool: ...
+    async def export_protonotes(self, protonotes: t.Sequence[Protonote]) -> bool: ...

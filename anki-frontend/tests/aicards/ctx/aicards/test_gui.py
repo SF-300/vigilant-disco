@@ -8,7 +8,7 @@ from aicards.ctx.aicards.base import (
     Extraction,
     Image,
     Protonote,
-    ExtractionProtonotes,
+    ExtractionWithPrototonotes,
 )
 from aicards.ctx.aicards.gui import AICardsContainer
 
@@ -29,9 +29,9 @@ class TestService(Service):
 
     def create_protonotes(
         self, extractions: list[Extraction]
-    ) -> list[ExtractionProtonotes]:
+    ) -> list[ExtractionWithPrototonotes]:
         return [
-            ExtractionProtonotes(extraction=extraction, protonotes=())
+            ExtractionWithPrototonotes(extraction=extraction, protonotes=())
             for extraction in extractions
         ]
 

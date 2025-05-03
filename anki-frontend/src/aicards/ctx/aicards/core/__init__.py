@@ -2,13 +2,15 @@
 Core implementation of the AiCards service.
 """
 
+import random
 import uuid
 import typing as t
 from ..base import (
+    Example,
     Service,
     Extraction,
     Protonote,
-    ExtractionProtonotes,
+    ExtractionWithPrototonotes,
     MeaningProtonote,
     EnglishNounProtonote,
 )
@@ -17,7 +19,7 @@ from ..base import (
 class MockService(Service):
     """A mock implementation of the Service interface for development and testing."""
 
-    def process_image(
+    async def process_image(
         self,
         image_data: bytes,
     ) -> t.Sequence[Extraction]:
@@ -45,9 +47,9 @@ class MockService(Service):
             ),
         ]
 
-    def create_protonotes(
+    async def create_protonotes(
         self, extractions: t.Sequence[Extraction]
-    ) -> t.Sequence[ExtractionProtonotes]:
+    ) -> t.Sequence[ExtractionWithPrototonotes]:
         """
         Mock implementation that creates fake protonotes from extractions.
 
@@ -64,29 +66,33 @@ class MockService(Service):
             meaning_note = MeaningProtonote(
                 id=f"proto-{uuid.uuid4()}",
                 type="Meaning",
-                concept=extraction.snippet.split()[0]
-                if extraction.snippet
-                else "concept",
-                examples=("Example 1", "Example 2"),
+                concept=f"Concept {random.randint(10, 99)}",
+                examples=(
+                    Example(
+                        sentence="Example sentence 1",
+                        image=None,
+                    ),
+                    None,
+                ),
             )
 
             noun_note = EnglishNounProtonote(
                 id=f"proto-{uuid.uuid4()}",
                 type="English Noun",
-                singular="card",
+                singular=f"Word {random.randint(10, 99)}",
                 plural="cards",
-                examples=("Example noun usage 1", "Example noun usage 2"),
             )
 
             result.append(
-                ExtractionProtonotes(
-                    extraction=extraction, protonotes=(meaning_note, noun_note)
+                ExtractionWithPrototonotes(
+                    extraction=extraction,
+                    protonotes=(meaning_note, noun_note),
                 )
             )
 
         return result
 
-    def export_protonotes(self, protonotes: t.Sequence[Protonote]) -> bool:
+    async def export_protonotes(self, protonotes: t.Sequence[Protonote]) -> bool:
         """
         Mock implementation that pretends to export protonotes.
 
