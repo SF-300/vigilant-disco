@@ -3,6 +3,20 @@ revision = 1
 requires-python = ">=3.13"
 
 [[package]]
+name = "aioreactive"
+version = "0.20.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "expression" },
+    { name = "reactivex" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ba/f1/b191aa532f0724b0803f5b978cafd85a23b6d81899d2c2884ad2fd8d08e4/aioreactive-0.20.0.tar.gz", hash = "sha256:2da08e5a7a722350fab082ee1426720b4e650adbcac4ff3839e29e676741d70d", size = 35512 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/61/a4/1c509efdaf51a29cc4bc74d0c0b6eff8f812f38721486c9bdfad465729bd/aioreactive-0.20.0-py3-none-any.whl", hash = "sha256:8887a6cd5ff8494a953b580e22940dc52d265b2555f4c652afefb14d21ac64f9", size = 39739 },
+]
+
+[[package]]
 name = "anki"
 version = "25.2.4"
 source = { registry = "https://pypi.org/simple" }
@@ -30,6 +44,7 @@ name = "anki-frontend"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "aioreactive" },
     { name = "anki" },
     { name = "httpx" },
     { name = "openai" },
@@ -48,6 +63,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aioreactive", specifier = ">=0.20.0" },
     { name = "anki", specifier = ">=25.2.4" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "openai", specifier = ">=1.77.0" },
@@ -177,6 +193,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5a/36/66b7dea1bb5688ba0d2d7bc113e9c0d57df697bd3f39ce2a139d9612aeee/doit-0.36.0.tar.gz", hash = "sha256:71d07ccc9514cb22fe59d98999577665eaab57e16f644d04336ae0b4bae234bc", size = 1448096 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/44/83/a2960d2c975836daa629a73995134fd86520c101412578c57da3d2aa71ee/doit-0.36.0-py3-none-any.whl", hash = "sha256:ebc285f6666871b5300091c26eafdff3de968a6bd60ea35dd1e3fc6f2e32479a", size = 85937 },
+]
+
+[[package]]
+name = "expression"
+version = "5.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/43/c7/bb061623b5815566bda69f5e9d156e38a97ebb383b8db3d2dedb26415466/expression-5.6.0.tar.gz", hash = "sha256:454f6fe138347194a43c7f878d958efe9b84b9cc770e462010c7a52e18058065", size = 59147 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6b/a2/656b8bebe495117342a8676ccabf52b3885ce11a856c8dfe1fbbdc250d2d/expression-5.6.0-py3-none-any.whl", hash = "sha256:f5c62e38186c9287e088dee9cf3939b0bbde21cb4c59571872154a53d33dd7c0", size = 69673 },
 ]
 
 [[package]]
@@ -499,6 +527,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1c/e0/7c7c973f52e1765d6ddfc41e9272294f65d5d52b8f5f5eae92adf411ad46/qasync-0.27.1.tar.gz", hash = "sha256:8dc768fd1ee5de1044c7c305eccf2d39d24d87803ea71189d4024fb475f4985f", size = 14287 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/51/06/bc628aa2981bcfd452a08ee435b812fd3eee4ada8acb8a76c4a09d1a5a77/qasync-0.27.1-py3-none-any.whl", hash = "sha256:5d57335723bc7d9b328dadd8cb2ed7978640e4bf2da184889ce50ee3ad2602c7", size = 14866 },
+]
+
+[[package]]
+name = "reactivex"
+version = "4.0.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ef/63/f776322df4d7b456446eff78c4e64f14c3c26d57d46b4e06c18807d5d99c/reactivex-4.0.4.tar.gz", hash = "sha256:e912e6591022ab9176df8348a653fe8c8fa7a301f26f9931c9d8c78a650e04e8", size = 119177 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/69/3f/2ed8c1b8fe3fc2ed816ba40554ef703aad8c51700e2606c139fcf9b7f791/reactivex-4.0.4-py3-none-any.whl", hash = "sha256:0004796c420bd9e68aad8e65627d85a8e13f293de76656165dffbcb3a0e3fb6a", size = 217791 },
 ]
 
 [[package]]

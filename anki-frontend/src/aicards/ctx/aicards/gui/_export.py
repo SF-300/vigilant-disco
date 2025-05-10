@@ -3,12 +3,19 @@ import typing as t
 
 from aicards.ctx.aicards.base import Service, ExtractionWithPrototonotes
 
+from ._base import AddLlmChatMessage
+
 
 async def export_handler(
     export_q: asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]],
     service: Service,
+    add_llm_chat_message: AddLlmChatMessage,
 ) -> None:
     while True:
         items = await export_q.get()
 
-        await service.export_protonotes([p for ep in items for p in ep.protonotes])
+        exporting = service.export_protonotes(
+            [p for ep in items for p in ep.protonotes]
+        )
+        async with await exporting.llm_messages.subscribe_async(add_llm_chat_message):
+            await exporting

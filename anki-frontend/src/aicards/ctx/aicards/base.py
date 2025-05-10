@@ -1,6 +1,7 @@
 import typing as t
 from abc import ABC
 
+import aioreactive as rx
 from pydantic.dataclasses import dataclass
 
 
@@ -67,11 +68,28 @@ class ExtractionWithPrototonotes:
     protonotes: tuple[Protonote, ...]
 
 
+@dataclass(frozen=True)
+class LlmChatMessage:
+    role: str
+    text: str
+
+
+class Processing[R](t.Awaitable[R]):
+    llm_messages: rx.AsyncObservable[LlmChatMessage]
+
+
 class Service(ABC):
-    async def process_image(self, image: Image) -> t.Sequence[Extraction]: ...
+    def process_image(
+        self,
+        image: Image,
+    ) -> Processing[list[Extraction]]: ...
 
-    async def create_protonotes(
-        self, extractions: t.Sequence[Extraction]
-    ) -> t.Sequence[ExtractionWithPrototonotes]: ...
+    def create_protonotes(
+        self,
+        extractions: t.Sequence[Extraction],
+    ) -> Processing[list[ExtractionWithPrototonotes]]: ...
 
-    async def export_protonotes(self, protonotes: t.Sequence[Protonote]) -> bool: ...
+    def export_protonotes(
+        self,
+        protonotes: list[Protonote],
+    ) -> Processing[bool]: ...

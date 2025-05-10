@@ -106,12 +106,14 @@ class AnkiConnectClient:
     async def running(
         cls, host: str = "localhost", port: int = 8765
     ) -> t.AsyncGenerator["AnkiConnectClient", None]:
-        """Creates and yields an AnkiConnectClient instance."""
         async with httpx.AsyncClient(
             base_url=f"http://{host}:{port}/",
             timeout=httpx.Timeout(10.0),
         ) as client:
-            yield cls(client)
+            print("Constructor done - returning instance")
+            this = cls(client)
+            yield this
+            print("Detructor")
 
     async def _request(self, action: str, version: int = 6, **params) -> t.Any:
         """Makes a request to the AnkiConnect API."""

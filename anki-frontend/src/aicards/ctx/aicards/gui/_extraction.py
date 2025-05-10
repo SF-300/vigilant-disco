@@ -15,10 +15,57 @@ from PyQt5.QtGui import QPainter, QLinearGradient, QColor
 from aicards.misc.utils import qt_signal_to_future
 from aicards.ctx.aicards.base import Service, Extraction, Image
 
+from ._base import AddLlmChatMessage
+
+
+async def extractions_handler(
+    incoming: asyncio.Queue[Image],
+    outgoing: asyncio.Queue[t.Sequence[Extraction]],
+    extractions_list: QListWidget,
+    confirm_button: QPushButton,
+    service: Service,
+    add_llm_chat_message: AddLlmChatMessage,
+) -> None:
+    async def pull():
+        while True:
+            image = await incoming.get()
+
+            image_processing = service.process_image(image)
+            async with await image_processing.llm_messages.subscribe_async(
+                add_llm_chat_message
+            ):
+                new_extractions = await image_processing
+
+            for extraction in new_extractions:
+                item = QListWidgetItem(extraction.snippet)
+                item.setData(Qt.ItemDataRole.UserRole, extraction)
+                extractions_list.addItem(item)
+                item.setSelected(True)
+
+            incoming.task_done()
+
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(pull())
+
+        while True:
+            await qt_signal_to_future(confirm_button.clicked)
+
+            selected_extractions: list[Extraction] = []
+            for item in extractions_list.selectedItems():
+                extraction = item.data(Qt.ItemDataRole.UserRole)
+                selected_extractions.append(extraction)
+
+            if not selected_extractions:
+                continue
+
+            extractions_list.clear()
+            await outgoing.put(selected_extractions)
+
 
 async def paste_receiver(
     extraction_input_queue: asyncio.Queue[Image],
     image_area: QLabel,
+    add_llm_chat_message: AddLlmChatMessage,
 ) -> None:
     clipboard = QApplication.clipboard()
     assert clipboard is not None
@@ -94,41 +141,3 @@ async def paste_receiver(
             paste_event_queue.task_done()
     except asyncio.CancelledError:
         clipboard.dataChanged.disconnect(conn)
-
-
-async def extractions_handler(
-    incoming: asyncio.Queue[Image],
-    outgoing: asyncio.Queue[t.Sequence[Extraction]],
-    extractions_list: QListWidget,
-    confirm_button: QPushButton,
-    service: Service,
-) -> None:
-    async def pull():
-        while True:
-            image = await incoming.get()
-            new_extractions = await service.process_image(image)
-
-            for extraction in new_extractions:
-                item = QListWidgetItem(extraction.snippet)
-                item.setData(Qt.ItemDataRole.UserRole, extraction)
-                extractions_list.addItem(item)
-                item.setSelected(True)
-
-            incoming.task_done()
-
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(pull())
-
-        while True:
-            await qt_signal_to_future(confirm_button.clicked)
-
-            selected_extractions: list[Extraction] = []
-            for item in extractions_list.selectedItems():
-                extraction = item.data(Qt.ItemDataRole.UserRole)
-                selected_extractions.append(extraction)
-
-            if not selected_extractions:
-                continue
-
-            await outgoing.put(selected_extractions)
-            extractions_list.clear()

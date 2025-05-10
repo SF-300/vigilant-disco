@@ -47,6 +47,7 @@ def main() -> None:
                 )
                 main_window.setCentralWidget(container)
                 main_window.show()
+
                 await app_close_event.wait()
 
         loop.run_until_complete(driver())

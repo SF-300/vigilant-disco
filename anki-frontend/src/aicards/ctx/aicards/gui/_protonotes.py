@@ -11,6 +11,8 @@ from PyQt5.QtCore import Qt
 from aicards.misc.utils import qt_signal_to_future
 from aicards.ctx.aicards.base import Service, Extraction, ExtractionWithPrototonotes
 
+from ._base import AddLlmChatMessage
+
 
 async def protonotes_creator(
     incoming: asyncio.Queue[t.Sequence[Extraction]],
@@ -18,6 +20,7 @@ async def protonotes_creator(
     notes_tree: QTreeWidget,
     confirm_button: QPushButton,
     service: Service,
+    add_llm_chat_message: AddLlmChatMessage,
 ) -> None:
     def update_tree(
         extraction_protonotes: t.Sequence[ExtractionWithPrototonotes],
@@ -56,7 +59,12 @@ async def protonotes_creator(
     async def pull():
         while True:
             extractions = await incoming.get()
-            extraction_protonotes = await service.create_protonotes(extractions)
+
+            protonotes_creation = service.create_protonotes(extractions)
+            async with await protonotes_creation.llm_messages.subscribe_async(
+                add_llm_chat_message
+            ):
+                extraction_protonotes = await protonotes_creation
 
             # Update the tree with the results
             update_tree(extraction_protonotes)

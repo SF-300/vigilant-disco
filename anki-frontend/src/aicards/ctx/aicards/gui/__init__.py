@@ -65,6 +65,7 @@ class AICardsContainer(QWidget):
         ) = create_top_section(left_panel)
         self._notes_tree = create_notes_preview(left_panel)
         self._confirm_protonotes = create_export_button(left_panel)
+        self._llm_dialogue = LLMDialoguePanel(self)
 
         # Add widgets to left panel
         left_layout.addWidget(workflow_container)
@@ -73,21 +74,20 @@ class AICardsContainer(QWidget):
 
         # Add the panels to main layout
         main_layout.addWidget(left_panel, stretch=2)
-        main_layout.addWidget(LLMDialoguePanel(self), stretch=1)
+        main_layout.addWidget(self._llm_dialogue, stretch=1)
 
-        # Create queues
         _extractions_q = asyncio.Queue[Image]()
         _protonotes_q = asyncio.Queue[t.Sequence[Extraction]]()
         _exports_q = asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]]()
-
-        # Use instance variables directly for widgets
 
         tg.create_task(
             paste_receiver(
                 _extractions_q,
                 self._image_area,
+                self._llm_dialogue.add_message,
             )
         )
+
         tg.create_task(
             extractions_handler(
                 _extractions_q,
@@ -95,6 +95,7 @@ class AICardsContainer(QWidget):
                 self._extractions_list,
                 self._confirm_extractions,
                 service,
+                self._llm_dialogue.add_message,
             )
         )
         tg.create_task(
@@ -104,12 +105,14 @@ class AICardsContainer(QWidget):
                 self._notes_tree,
                 self._confirm_protonotes,
                 service,
+                self._llm_dialogue.add_message,
             )
         )
         tg.create_task(
             export_handler(
                 _exports_q,
                 service,
+                self._llm_dialogue.add_message,
             )
         )
 
@@ -155,7 +158,9 @@ def create_top_section(
 
     # Create a vertical layout for the extractions list and the confirm button
     right_column = QWidget(container)
-    right_column.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    right_column.setSizePolicy(
+        QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+    )
     right_layout = QVBoxLayout(right_column)
     right_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins
     right_layout.setSpacing(5)  # Small spacing between list and button
@@ -190,11 +195,10 @@ def create_extractions_list(parent: QWidget) -> QListWidget:
 
 
 def create_confirm_button(parent: QWidget) -> QPushButton:
-    button = QPushButton("Process Selected Extractions\n↓ ↓ ↓ ↓ ↓", parent)
+    button = QPushButton("↓ Process Selected Extractions ↓", parent)
     # Don't set a maximum width, so it can expand to the width of its container
     button.setSizePolicy(
-        QSizePolicy.Policy.MinimumExpanding,
-        QSizePolicy.Policy.Preferred
+        QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Preferred
     )
     return button
 
