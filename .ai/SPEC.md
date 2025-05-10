@@ -51,12 +51,21 @@ The proposed user interface for the Anki add-on, based on the provided sketch, i
     * **Component:** An "**Import into Anki database**" button.
     * **Purpose:** Initiates the export of the user-selected notes (from the Preview Area) into their Anki collection.
 
+6.  **LLM Dialogue Panel (New):**
+    * **Location:** A dedicated panel on the right side of the UI.
+    * **Purpose:** Displays a read-only log of interactions with the LLM API for debugging and transparency.
+    * **Content:**
+        * Initial system prompt used for the LLM.
+        * Prompt used for OCR and initial text extraction from the pasted image.
+        * Prompts used for generating note data (grammar, meaning, examples) for each confirmed extraction.
+    * **Interaction:** Read-only display.
+
 ## User Flow
 
 1.  **Highlight & Capture Screenshot:** The user **highlights** text fragments in their homework or study material and takes a screenshot.
-2.  **Open Dedicated Window:** The user opens the dedicated add-on window within Anki.
+2.  **Open Dedicated Window:** The user opens the dedicated add-on window within Anki. The **LLM Dialogue Panel** displays the initial system prompt.
 3.  **Paste Screenshot:** The user presses `Ctrl+V`; the screenshot (showing the **highlights**) appears in the **Image Display Area (1)**.
-4.  **Initial Text Extraction:** The add-on utilizes an LLM API to perform OCR on the image, focusing on the **highlighted** areas, and populates the **Extractions List (2)** with the identified text **extractions**.
+4.  **Initial Text Extraction:** The add-on utilizes an LLM API to perform OCR on the image, focusing on the **highlighted** areas, and populates the **Extractions List (2)** with the identified text **extractions**. The prompt sent to the LLM for this step is displayed in the **LLM Dialogue Panel**.
 5.  **Select Target Extractions:** The user selects the **extractions** they wish to create flashcards for from the **Extractions List (2)**.
 6.  **Confirm Selections:** The user clicks the **Confirm button (3)**.
 7.  **Generate & Display Note Data (LLM):** For each selected **extraction**, the add-on uses the LLM API to:
@@ -67,7 +76,7 @@ The proposed user interface for the Anki add-on, based on the provided sketch, i
         * For phrases, it might be some concise description of the meaning in this particular context
       * For English nouns (Phase 1 MVP): Generate singular and plural forms.
     * Generate up to 5 example sentences showcasing the **extraction** in context.
-    The add-on then displays this data in the **Note Preview & Selection Area (4)**, structured as described in the UI section.
+    The add-on then displays this data in the **Note Preview & Selection Area (4)**, structured as described in the UI section. Each prompt sent to the LLM for these generation tasks is displayed in the **LLM Dialogue Panel**.
 8.  **Review & Select Notes:** The user reviews the generated data in the **Note Preview & Selection Area (4)**, using the expandable structure to finalize selections (e.g., "Meaning", "Grammar") for each **extraction**.
 9.  **Initiate Export:** The user clicks the **Import into Anki database button (5)**.
 10. **Export in Progress:** The add-on's GUI grays out to indicate that the export process is running.

@@ -21,6 +21,5 @@ htmlcov/
 # Anki specific
 user_files/
 *.anki2
-*.apkg
 
 *.ankiaddon

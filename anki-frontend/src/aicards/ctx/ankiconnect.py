@@ -7,7 +7,9 @@ from aicards.ctx.aicards.base import Protonote, EnglishNounProtonote, MeaningPro
 
 @functools.singledispatch
 def notedata_from(
-    protonote: Protonote, deck_name: str = "Default", tags: t.Sequence[str] = tuple()
+    protonote: Protonote,
+    deck_name: str = "Default",
+    tags: t.Sequence[str] = tuple(),
 ) -> NoteData:
     raise NotImplementedError(f"Unsupported protonote type: {type(protonote)}")
 
