@@ -8,13 +8,13 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 
-from aicards.misc.utils import qt_signal_to_future
+from aicards.misc.utils import future_from_qt_signal
 from aicards.ctx.aicards.base import IService, Extraction, ExtractionWithPrototonotes
 
 from ._base import AddLlmChatMessage
 
 
-async def protonotes_creator(
+async def protonotes_creating_processor(
     incoming: asyncio.Queue[t.Sequence[Extraction]],
     outgoing: asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]],
     notes_tree: QTreeWidget,
@@ -74,7 +74,7 @@ async def protonotes_creator(
         tg.create_task(pull())
 
         while True:
-            await qt_signal_to_future(confirm_button.clicked)
+            await future_from_qt_signal(confirm_button.clicked)
 
             selected_protonotes = get_selected_extraction_protonotes()
             if not selected_protonotes:

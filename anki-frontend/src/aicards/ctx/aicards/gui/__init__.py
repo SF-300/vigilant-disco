@@ -21,9 +21,13 @@ from aicards.ctx.aicards.base import (
     Image,
     ExtractionWithPrototonotes,
 )
-from aicards.ctx.aicards.gui._extraction import paste_receiver, extractions_handler
-from aicards.ctx.aicards.gui._protonotes import protonotes_creator
-from aicards.ctx.aicards.gui._export import export_handler
+from aicards.ctx.aicards.gui._extraction import (
+    clipboard_pastes_processor,
+    image_file_dialog_processor,
+    extractions_processor
+)
+from aicards.ctx.aicards.gui._protonotes import protonotes_creating_processor
+from aicards.ctx.aicards.gui._export import exports_processor
 from aicards.ctx.aicards.gui._llm_dialogue import LLMDialoguePanel
 
 
@@ -81,7 +85,15 @@ class AICardsContainer(QWidget):
         _exports_q = asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]]()
 
         tg.create_task(
-            paste_receiver(
+            clipboard_pastes_processor(
+                _extractions_q,
+                self._image_area,
+                self._llm_dialogue.add_message,
+            )
+        )
+        
+        tg.create_task(
+            image_file_dialog_processor(
                 _extractions_q,
                 self._image_area,
                 self._llm_dialogue.add_message,
@@ -89,7 +101,7 @@ class AICardsContainer(QWidget):
         )
 
         tg.create_task(
-            extractions_handler(
+            extractions_processor(
                 _extractions_q,
                 _protonotes_q,
                 self._extractions_list,
@@ -99,7 +111,7 @@ class AICardsContainer(QWidget):
             )
         )
         tg.create_task(
-            protonotes_creator(
+            protonotes_creating_processor(
                 _protonotes_q,
                 _exports_q,
                 self._notes_tree,
@@ -109,7 +121,7 @@ class AICardsContainer(QWidget):
             )
         )
         tg.create_task(
-            export_handler(
+            exports_processor(
                 _exports_q,
                 service,
                 self._llm_dialogue.add_message,
@@ -117,7 +129,7 @@ class AICardsContainer(QWidget):
         )
 
     @property
-    def image_area(self) -> QLabel:
+    def image_area(self) -> QPushButton:
         return self._image_area
 
     @property
@@ -146,7 +158,7 @@ def create_main_layout(*widgets: QWidget) -> QVBoxLayout:
 
 def create_top_section(
     parent: QWidget,
-) -> tuple[QWidget, QLabel, QListWidget, QPushButton]:
+) -> tuple[QWidget, QPushButton, QListWidget, QPushButton]:
     container = QWidget(parent)
     layout = QHBoxLayout()
     layout.setContentsMargins(0, 0, 0, 0)  # Remove outer margins
@@ -181,12 +193,22 @@ def create_top_section(
     return container, image_area, extractions_list, confirm_button
 
 
-def create_image_area(parent: QWidget) -> QLabel:
-    label = QLabel("Paste screenshot with Ctrl+V", parent)
-    label.setMinimumSize(400, 300)
-    label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-    label.setFrameStyle(1)  # Box | Sunken
-    return label
+def create_image_area(parent: QWidget) -> QPushButton:
+    button = QPushButton("Click here to select an image or paste with Ctrl+V", parent)
+    button.setMinimumSize(400, 300)
+    button.setFlat(True)  # Make it look more like a label
+    button.setCursor(Qt.CursorShape.PointingHandCursor)  # Show it's clickable
+    button.setStyleSheet("""
+        QPushButton {
+            text-align: center;
+            border: 1px solid #aaa;
+            background-color: #f8f8f8;
+        }
+        QPushButton:hover {
+            background-color: #f0f0f0;
+        }
+    """)
+    return button
 
 
 def create_extractions_list(parent: QWidget) -> QListWidget:

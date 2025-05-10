@@ -2,6 +2,7 @@ import typing as t
 from abc import ABC
 
 import aioreactive as rx
+import pydantic
 from pydantic.dataclasses import dataclass
 
 
@@ -14,9 +15,20 @@ class Image:
 
 @dataclass(frozen=True)
 class Extraction:
-    id: str
-    snippet: str
-    context: str | None
+    reason: str = pydantic.Field(
+        description="Presumptive reason why user might want to make this snippet into notes/cards",
+    )
+    snippet: str = pydantic.Field(
+        description="What user has actually emphasized in the image",
+    )
+    context: str | None = pydantic.Field(
+        description="Context for the snippet, if any",
+        default=None,
+    )
+    comment: str | None = pydantic.Field(
+        description="Optional comment for LLM during downstream processing stages",
+        default=None,
+    )
 
 
 @dataclass(frozen=True)
@@ -26,8 +38,9 @@ class Example:
 
 
 @dataclass(frozen=True)
-class Protonote:
+class Protonote(ABC):
     id: str
+    type: str
 
     @property
     def description(self) -> str:

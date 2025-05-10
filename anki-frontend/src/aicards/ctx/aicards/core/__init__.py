@@ -37,7 +37,7 @@ class Operation[R](IOperation[R]):
 
 
 class Service(IService):
-    def process_image(self, image: Image) -> Operation:
+    def process_image(self, image: Image) -> Operation[list[Extraction]]:
         llm_messages = rx.AsyncSubject()
         return Operation(
             self._process_image(image, llm_messages),
@@ -48,7 +48,7 @@ class Service(IService):
         self,
         image: Image,
         llm_messages: rx.AsyncSubject,
-    ) -> t.Sequence[Extraction]:
+    ) -> list[Extraction]:
         await llm_messages.asend(
             LlmChatMessage(
                 role="user",
@@ -59,12 +59,15 @@ class Service(IService):
             Extraction(
                 id=f"extraction-{uuid.uuid4()}",
                 snippet=f"Snippet {random.randint(1, 100)}",
-                context=None,
+                reason=f"Reason {random.randint(1, 100)}",
             )
             for _ in range(random.randint(1, 5))
         ]
 
-    def create_protonotes(self, extractions: t.Sequence[Extraction]) -> Operation:
+    def create_protonotes(
+        self,
+        extractions: t.Sequence[Extraction],
+    ) -> Operation[t.Sequence[ExtractionWithPrototonotes]]:
         llm_messages = rx.AsyncSubject()
         return Operation(
             self._create_protonotes(extractions, llm_messages),
@@ -109,7 +112,10 @@ class Service(IService):
             for extraction in extractions
         ]
 
-    def export_protonotes(self, protonotes: t.Sequence[Protonote]) -> Operation:
+    def export_protonotes(
+        self,
+        protonotes: t.Sequence[Protonote],
+    ) -> Operation[t.Sequence[Protonote]]:
         llm_messages = rx.AsyncSubject()
         return Operation(
             self._export_protonotes(protonotes, llm_messages),

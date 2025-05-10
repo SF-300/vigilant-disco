@@ -6,7 +6,7 @@ def iife[R](func: t.Callable[..., R]) -> R:
     return func()
 
 
-def qt_signal_to_future(signal) -> aio.Future:
+def future_from_qt_signal(signal) -> aio.Future:
     """Convert a Qt signal to an asyncio future."""
     loop = aio.get_running_loop()
     future = loop.create_future()

@@ -6,7 +6,7 @@ from aicards.ctx.aicards.base import IService, ExtractionWithPrototonotes
 from ._base import AddLlmChatMessage
 
 
-async def export_handler(
+async def exports_processor(
     export_q: asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]],
     service: IService,
     add_llm_chat_message: AddLlmChatMessage,
