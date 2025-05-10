@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
 )
 
 from aicards.ctx.aicards.base import (
-    Service,
+    IService,
     Extraction,
     Image,
     ExtractionWithPrototonotes,
@@ -32,7 +32,7 @@ class AICardsContainer(QWidget):
     @contextlib.asynccontextmanager
     async def running(
         cls,
-        service: Service,
+        service: IService,
         parent: QWidget | None,
     ) -> t.AsyncIterator[t.Self]:
         async with asyncio.TaskGroup() as tg:
@@ -41,7 +41,7 @@ class AICardsContainer(QWidget):
 
     def __init__(
         self,
-        service: Service,
+        service: IService,
         parent: QWidget | None,
         tg: asyncio.TaskGroup,
     ) -> None:
@@ -159,7 +159,8 @@ def create_top_section(
     # Create a vertical layout for the extractions list and the confirm button
     right_column = QWidget(container)
     right_column.setSizePolicy(
-        QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+        QSizePolicy.Policy.Expanding,
+        QSizePolicy.Policy.Preferred,
     )
     right_layout = QVBoxLayout(right_column)
     right_layout.setContentsMargins(0, 0, 0, 0)  # Remove margins

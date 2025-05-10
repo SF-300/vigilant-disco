@@ -5,10 +5,11 @@ import sys
 import qasync
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
+from aicards.ctx.aicards.base import LlmChatMessage
 from aicards.misc.utils import iife
 from aicards.misc.ankiconnect_client import AnkiConnectClient
 from aicards.ctx.ankiconnect import notedata_from
-from aicards.ctx.aicards.core import MockService
+from aicards.ctx.aicards.core import Service
 from aicards.ctx.aicards.gui import AICardsContainer
 
 
@@ -33,11 +34,17 @@ def main() -> None:
                 )
 
                 @iife
-                class service(MockService):
-                    async def export_protonotes(self, protonotes):
+                class service(Service):
+                    async def _export_protonotes(self, protonotes, llm_messages):
                         for protonote in protonotes:
+                            await llm_messages.asend(
+                                LlmChatMessage(
+                                    role="user",
+                                    text=f"Exporting protonote {protonote.description}",
+                                )
+                            )
                             note_data = notedata_from(protonote, deck_name="English")
-                            await ankiconnect_client.addNote(note_data)
+                            await ankiconnect_client.add_note(note_data)
 
                 container = await stack.enter_async_context(
                     AICardsContainer.running(

@@ -13,7 +13,7 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtGui import QPainter, QLinearGradient, QColor
 
 from aicards.misc.utils import qt_signal_to_future
-from aicards.ctx.aicards.base import Service, Extraction, Image
+from aicards.ctx.aicards.base import IService, Extraction, Image
 
 from ._base import AddLlmChatMessage
 
@@ -23,7 +23,7 @@ async def extractions_handler(
     outgoing: asyncio.Queue[t.Sequence[Extraction]],
     extractions_list: QListWidget,
     confirm_button: QPushButton,
-    service: Service,
+    service: IService,
     add_llm_chat_message: AddLlmChatMessage,
 ) -> None:
     async def pull():

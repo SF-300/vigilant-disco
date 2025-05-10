@@ -1,13 +1,13 @@
 import pytest
 
-from aicards.ctx.aicards.core import MockService
+from aicards.ctx.aicards.core import Service
 from aicards.ctx.aicards.base import Extraction, MeaningProtonote, EnglishNounProtonote
 
 
 @pytest.fixture
-def service() -> MockService:
+def service() -> Service:
     """Provides a MockService instance for testing."""
-    return MockService()
+    return Service()
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def sample_extractions() -> list[Extraction]:
     ]
 
 
-def test_process_image_returns_extractions(service: MockService, sample_image: bytes):
+def test_process_image_returns_extractions(service: Service, sample_image: bytes):
     """Test that process_image returns a non-empty sequence of Extraction objects."""
     extractions = service.process_image(sample_image)
     assert len(extractions) > 0
@@ -45,7 +45,7 @@ def test_process_image_returns_extractions(service: MockService, sample_image: b
 
 
 def test_create_protonotes_generates_notes_for_each_extraction(
-    service: MockService, sample_extractions: list[Extraction]
+    service: Service, sample_extractions: list[Extraction]
 ):
     """Test that create_protonotes generates protonotes for each extraction."""
     results = service.create_protonotes(sample_extractions)
@@ -68,14 +68,14 @@ def test_create_protonotes_generates_notes_for_each_extraction(
             assert len(note.examples) > 0
 
 
-def test_create_protonotes_handles_empty_input(service: MockService):
+def test_create_protonotes_handles_empty_input(service: Service):
     """Test that create_protonotes handles empty input gracefully."""
     results = service.create_protonotes([])
     assert len(results) == 0
 
 
 def test_export_protonotes_returns_success(
-    service: MockService, sample_extractions: list[Extraction]
+    service: Service, sample_extractions: list[Extraction]
 ):
     """Test that export_protonotes returns True indicating success."""
     # First create some protonotes to export
@@ -86,6 +86,6 @@ def test_export_protonotes_returns_success(
     assert service.export_protonotes(protonotes) is True
 
 
-def test_export_protonotes_handles_empty_input(service: MockService):
+def test_export_protonotes_handles_empty_input(service: Service):
     """Test that export_protonotes handles empty input gracefully."""
     assert service.export_protonotes([]) is True

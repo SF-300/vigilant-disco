@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, QEvent, QMimeData
 from PyQt5.QtGui import QImage, QKeyEvent, QKeySequence
 
 from aicards.ctx.aicards.base import (
-    Service,
+    IService,
     Extraction,
     Image,
     Protonote,
@@ -13,7 +13,7 @@ from aicards.ctx.aicards.base import (
 from aicards.ctx.aicards.gui import AICardsContainer
 
 
-class TestService(Service):
+class TestService(IService):
     def process_image(self, image: Image) -> list[Extraction]:
         assert isinstance(image, Image)
         assert image.mime == "image/png"
@@ -40,7 +40,7 @@ class TestService(Service):
 
 
 @pytest.fixture
-def test_service() -> Service:
+def test_service() -> IService:
     return TestService()
 
 

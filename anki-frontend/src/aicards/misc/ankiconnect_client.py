@@ -76,8 +76,6 @@ MediaFile = t.Union[MediaFileWithURL, MediaFileWithData, MediaFileWithPath]
 
 
 class NoteData(t.TypedDict, total=False):
-    """Complete note structure."""
-
     deckName: str
     modelName: str
     fields: dict[str, str]
@@ -89,15 +87,10 @@ class NoteData(t.TypedDict, total=False):
 
 
 class AddNoteParams(t.TypedDict):
-    """Parameters for addNote request."""
-
     note: NoteData
 
 
-# AnkiConnectClient Class
 class AnkiConnectClient:
-    """Async client for AnkiConnect API."""
-
     def __init__(self, client: httpx.AsyncClient):
         self._client = client
 
@@ -110,10 +103,7 @@ class AnkiConnectClient:
             base_url=f"http://{host}:{port}/",
             timeout=httpx.Timeout(10.0),
         ) as client:
-            print("Constructor done - returning instance")
-            this = cls(client)
-            yield this
-            print("Detructor")
+            yield cls(client)
 
     async def _request(self, action: str, version: int = 6, **params) -> t.Any:
         """Makes a request to the AnkiConnect API."""
@@ -138,12 +128,7 @@ class AnkiConnectClient:
         except json.JSONDecodeError as e:
             raise AnkiConnectClientError(f"Invalid JSON response: {e}") from e
 
-    async def addNote(self, note: NoteData) -> int:
-        """Adds a note to Anki.
-
-        Returns the identifier of the created note on success.
-        Raises AnkiConnectAPIError if the note couldn't be added.
-        """
+    async def add_note(self, note: NoteData) -> int:
         result = await self._request("addNote", note=note)
         if result is None:
             raise AnkiConnectAPIError("Failed to add note")

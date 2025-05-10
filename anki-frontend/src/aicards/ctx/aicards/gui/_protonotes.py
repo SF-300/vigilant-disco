@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 
 from aicards.misc.utils import qt_signal_to_future
-from aicards.ctx.aicards.base import Service, Extraction, ExtractionWithPrototonotes
+from aicards.ctx.aicards.base import IService, Extraction, ExtractionWithPrototonotes
 
 from ._base import AddLlmChatMessage
 
@@ -19,7 +19,7 @@ async def protonotes_creator(
     outgoing: asyncio.Queue[t.Sequence[ExtractionWithPrototonotes]],
     notes_tree: QTreeWidget,
     confirm_button: QPushButton,
-    service: Service,
+    service: IService,
     add_llm_chat_message: AddLlmChatMessage,
 ) -> None:
     def update_tree(

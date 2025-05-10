@@ -74,22 +74,22 @@ class LlmChatMessage:
     text: str
 
 
-class Processing[R](t.Awaitable[R]):
+class IOperation[R](t.Awaitable[R]):
     llm_messages: rx.AsyncObservable[LlmChatMessage]
 
 
-class Service(ABC):
+class IService(ABC):
     def process_image(
         self,
         image: Image,
-    ) -> Processing[list[Extraction]]: ...
+    ) -> IOperation[list[Extraction]]: ...
 
     def create_protonotes(
         self,
         extractions: t.Sequence[Extraction],
-    ) -> Processing[list[ExtractionWithPrototonotes]]: ...
+    ) -> IOperation[list[ExtractionWithPrototonotes]]: ...
 
     def export_protonotes(
         self,
         protonotes: list[Protonote],
-    ) -> Processing[bool]: ...
+    ) -> IOperation[bool]: ...
