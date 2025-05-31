@@ -1,12 +1,9 @@
-"""
-Async client for AnkiConnect API.
-"""
-
 import json
 import typing as t
 from contextlib import asynccontextmanager
 
 import httpx
+import pydantic
 
 
 # Exception Hierarchy
@@ -90,6 +87,14 @@ class AddNoteParams(t.TypedDict):
     note: NoteData
 
 
+class CanAddNoteResponse(pydantic.BaseModel):
+    canAdd: bool
+    error: None | str
+
+
+type CanAddNotesResponse = list[CanAddNoteResponse]
+
+
 class AnkiConnectClient:
     def __init__(self, client: httpx.AsyncClient):
         self._client = client
@@ -97,7 +102,9 @@ class AnkiConnectClient:
     @classmethod
     @asynccontextmanager
     async def running(
-        cls, host: str = "localhost", port: int = 8765
+        cls,
+        host: str = "localhost",
+        port: int = 8765,
     ) -> t.AsyncGenerator["AnkiConnectClient", None]:
         async with httpx.AsyncClient(
             base_url=f"http://{host}:{port}/",
@@ -106,7 +113,6 @@ class AnkiConnectClient:
             yield cls(client)
 
     async def _request(self, action: str, version: int = 6, **params) -> t.Any:
-        """Makes a request to the AnkiConnect API."""
         payload = {"action": action, "version": version}
         if params:
             payload["params"] = params
@@ -133,3 +139,17 @@ class AnkiConnectClient:
         if result is None:
             raise AnkiConnectAPIError("Failed to add note")
         return result
+
+    async def can_add_notes_with_error_detail(
+        self, notes: t.Sequence[NoteData]
+    ) -> CanAddNotesResponse:
+        raw_results = await self._request(
+            "canAddNotesWithErrorDetail", notes=list(notes)
+        )
+
+        try:
+            return pydantic.TypeAdapter(CanAddNotesResponse).validate_python(
+                raw_results
+            )
+        except pydantic.ValidationError as e:
+            raise AnkiConnectAPIError("Unexpected response format") from e

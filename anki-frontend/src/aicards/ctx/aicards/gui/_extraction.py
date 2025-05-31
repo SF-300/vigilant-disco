@@ -62,7 +62,7 @@ async def extractions_processor(
         while True:
             image = await incoming.get()
 
-            image_processing = service.process_image(image)
+            image_processing = service.extract_emphases(image)
             async with await image_processing.llm_messages.subscribe_async(
                 add_llm_chat_message
             ):
@@ -150,7 +150,7 @@ async def image_file_dialog_processor(
             )
             await outgoing.put(image)
 
-    except asyncio.CancelledError:
+    finally:
         pass  # No cleanup needed
 
 

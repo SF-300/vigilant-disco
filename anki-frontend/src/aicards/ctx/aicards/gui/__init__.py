@@ -8,7 +8,6 @@ from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
-    QLabel,
     QListWidget,
     QPushButton,
     QTreeWidget,
@@ -24,7 +23,7 @@ from aicards.ctx.aicards.base import (
 from aicards.ctx.aicards.gui._extraction import (
     clipboard_pastes_processor,
     image_file_dialog_processor,
-    extractions_processor
+    extractions_processor,
 )
 from aicards.ctx.aicards.gui._protonotes import protonotes_creating_processor
 from aicards.ctx.aicards.gui._export import exports_processor
@@ -91,7 +90,7 @@ class AICardsContainer(QWidget):
                 self._llm_dialogue.add_message,
             )
         )
-        
+
         tg.create_task(
             image_file_dialog_processor(
                 _extractions_q,

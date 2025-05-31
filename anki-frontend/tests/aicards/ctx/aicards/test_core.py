@@ -35,7 +35,7 @@ def sample_extractions() -> list[Extraction]:
 
 def test_process_image_returns_extractions(service: Service, sample_image: bytes):
     """Test that process_image returns a non-empty sequence of Extraction objects."""
-    extractions = service.process_image(sample_image)
+    extractions = service.extract_emphases(sample_image)
     assert len(extractions) > 0
     for extraction in extractions:
         assert isinstance(extraction, Extraction)

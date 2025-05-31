@@ -14,7 +14,7 @@ from aicards.ctx.aicards.gui import AICardsContainer
 
 
 class TestService(IService):
-    def process_image(self, image: Image) -> list[Extraction]:
+    def extract_emphases(self, image: Image) -> list[Extraction]:
         assert isinstance(image, Image)
         assert image.mime == "image/png"
 

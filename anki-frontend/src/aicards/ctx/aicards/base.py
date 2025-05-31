@@ -5,6 +5,8 @@ import aioreactive as rx
 import pydantic
 from pydantic.dataclasses import dataclass
 
+from aicards.misc.logging import LoggerLike
+
 
 @dataclass(frozen=True)
 class Image:
@@ -15,8 +17,12 @@ class Image:
 
 @dataclass(frozen=True)
 class Extraction:
+    """
+    "Single logical emphasis from the image"
+    """
+
     reason: str = pydantic.Field(
-        description="Presumptive reason why user might want to make this snippet into notes/cards",
+        description="Presumptive reason why user might want to make this snippet into Anki notes/cards",
     )
     snippet: str = pydantic.Field(
         description="What user has actually emphasized in the image",
@@ -92,17 +98,20 @@ class IOperation[R](t.Awaitable[R]):
 
 
 class IService(ABC):
-    def process_image(
+    def extract_emphases(
         self,
         image: Image,
+        logger: LoggerLike = ...,
     ) -> IOperation[list[Extraction]]: ...
 
     def create_protonotes(
         self,
         extractions: t.Sequence[Extraction],
+        logger: LoggerLike = ...,
     ) -> IOperation[list[ExtractionWithPrototonotes]]: ...
 
     def export_protonotes(
         self,
         protonotes: list[Protonote],
+        logger: LoggerLike = ...,
     ) -> IOperation[bool]: ...
